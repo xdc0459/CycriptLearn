@@ -35,9 +35,9 @@ function hook_glShaderSource2() {
             if (lenght > 0) {
                 var p = malloc(lenght+1);
                 if (p != NULL) {
-                    memset(p, 0, lenght+1); 
+                    memset(p, 0x00, lenght+1); 
                     memcpy(p, plength[i], lenght);
-                    NSLog([new NSString initWithFormat:@"glShaderSource shader at index %i : \n%@", i, [new  NSString initWithUTF8String:*p], nil]);
+                    NSLog([new NSString initWithFormat:@"glShaderSource shader at index %i : \n%@", i, [new  NSString initWithUTF8String:p], nil]);
                     free(p);
                 }
             }
