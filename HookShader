@@ -16,25 +16,32 @@ function is64Bit(){
 
 @import com.saurik.substrate.MS;
 extern "C" void glShaderSource(GLuint shader, GLsizei count, const GLchar* const *string, const GLint* length);
+
+// var oldgl= {};
+// MS.hookFunction(glShaderSource, function(shader, count, pstring, length) { (*oldgl)(shader, count, pstring, length); NSLog([new NSString initWithFormat:@"\n%@", [new  NSString initWithUTF8String:*pstring], nil]); }, oldgl)
+
 var old_glShaderSource = {};
 function hook_glShaderSource() {
+    MS.hookFunction(glShaderSource, function(shader, count, pstring, plength) {
+        (*old_glShaderSource)(shader, count, pstring, plength);
+	NSLog([new NSString initWithFormat:@"\n%@", [new  NSString initWithUTF8String:*pstring], nil]); 
+    }, old_glShaderSource);
+}
+function hook_glShaderSource2() {
     MS.hookFunction(glShaderSource, function(shader, count, pstring, plength) {
         var file = (*old_glShaderSource)(shader, count, pstring, plength);
         for (var i = 0; i < count; ++i) {
             var length = plength[i] + 1;
             if (lenght > 0) {
-                char * p = malloc(lenght+1);
+                var p = malloc(lenght+1);
                 if (p != NULL) {
                     memset(p, 0, lenght+1); 
                     memcpy(p, plength[i], lenght);
-                    NSLog([new NSString initWithForma:@"\n%@", [new  NSString initWithUTF8String:*p], nil]);
+                    NSLog([new NSString initWithFormat:@"glShaderSource shader at index %i : \n%@", i, [new  NSString initWithUTF8String:*p], nil]);
                     free(p);
                 }
             }
-            //NSLog([new NSString initWithForma:@"\n%@", [new  NSString initWithUTF8String:*pstring], nil]);
         }
         return file;   
     }, old_glShaderSource);
 }
-// var oldgl= {};
-// MS.hookFunction(glShaderSource, function(shader, count, pstring, length){(*oldgl)(shader, count, pstring, length); NSLog([new NSString initWithForma:@"\n%@", [new  NSString initWithUTF8String:*pstring], nil]); }, oldgl)
