@@ -31,7 +31,7 @@ function hook_glShaderSource2() {
     MS.hookFunction(glShaderSource, function(shader, count, pstring, plength) {
         var file = (*old_glShaderSource)(shader, count, pstring, plength);
         for (var i = 0; i < count; ++i) {
-            var length = plength[i] + 1;
+            var length = plength[i];
             if (lenght > 0) {
                 var p = malloc(lenght+1);
                 if (p != NULL) {
