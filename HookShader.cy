@@ -14,11 +14,26 @@ function is64Bit(){
 	return *is64Bit;
 }
 
+function printMethods(className, isa) {
+    var count = new new Type("I");
+    var classObj = (isa != undefined) ? objc_getClass(className)->isa : objc_getClass(className);
+    var methods = class_copyMethodList(classObj, count);
+    var methodsArray = [];
+    for(var i = 0; i < *count; i++) {
+        var method = methods[i];
+        methodsArray.push({selector:method_getName(method), implementation:method_getImplementation(method)});
+    }
+    free(methods);
+    return methodsArray;
+}
+
 @import com.saurik.substrate.MS;
 extern "C" void glShaderSource(GLuint shader, GLsizei count, const GLchar* const *string, const GLint* length);
 
 // var oldgl= {};
 // MS.hookFunction(glShaderSource, function(shader, count, pstring, length) { (*oldgl)(shader, count, pstring, length); NSLog([new NSString initWithFormat:@"\n%@", [new  NSString initWithUTF8String:*pstring], nil]); }, oldgl)
+// extern "C" void glShaderSource(GLuint shader, GLsizei count, const GLchar* const *string, const GLint* length);
+// void glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid* pixels);
 // call hook_glShaderSource or hook_glShaderSource2 only once
 var old_glShaderSource = {};
 function hook_glShaderSource() {
@@ -55,7 +70,6 @@ function hook_glShaderSource2() {
 	(*old_glShaderSource)(shader, count, pstring, plength);
     }, old_glShaderSource);
 }
-
 // void glShaderBinary (GLsizei n, const GLuint* shaders, GLenum binaryformat, const GLvoid* binary, GLsizei length)  
 var old_glShaderBinary = {};
 function hook_glShaderBinary() {
@@ -65,4 +79,47 @@ function hook_glShaderBinary() {
 	// 如果不多出一个nil参数的话，会crash
 	NSLog([new NSString initWithFormat:@"glShaderBinary count %i, binaryformat:%i; \n%@", n, binaryformat, [new NSData initWithBytes:binary length:length], nil]); 
     }, old_glShaderBinary);
+}
+
+// + (nullable CIFilter *) filterWithName:(NSString *) name;
+// + (nullable CIFilter *)filterWithName:(NSString *)name keysAndValues:key0, ... NS_REQUIRES_NIL_TERMINATION
+// + (nullable CIFilter *)filterWithName:(NSString *)name withInputParameters:(nullable NSDictionary<NSString *,id> *)params
+// TODO : a qusetion = I don't know how to hook 'filterWithName:keysAndValues:key0, ...'
+var old_CIFilter_filterWithName = {};
+function hook_CIFilter_filterWithName() {
+    MS.hookMessage(CIFilter->isa, @selector(filterWithName:), function(arg1) {
+       NSLog(@"%@", arg1, nil);
+       return old_CIFilter_filterWithName->call(this, arg1);
+    }, old_CIFilter_filterWithName);
+}
+
+var old_CIFilter_filterWithName_withInputParameters = {};
+function hook_CIFilter_filterWithName_withInputParameters() {
+    MS.hookMessage(CIFilter->isa, @selector(filterWithName:withInputParameters:), function(arg1, params) {
+       NSLog(@"CIFilter filterWithName : %@, %@", arg1, params, nil);
+       return old_CIFilter_filterWithName_withInputParameters->call(this, arg1, params);
+    }, old_CIFilter_filterWithName_withInputParameters);
+}
+
+// - (nullable instancetype)initWithData:(NSData *)data scale:(CGFloat)scale
+// - (nullable instancetype)initWithData:(NSData *)data
+function hook_UIImage_initWithData() {
+    imageOriginInitData = UIImage.prototype['initWithData:'];
+
+    UIImage.prototype['initWithData:'] = function(arg1) {
+        var path = [new NSString initWithFormat:@"%@/Documents/%@", NSHomeDirectory, [new NSUUID init].UUIDString, nil];
+        NSLog(@"UIImage.prototype['initWithData:'] %@", path, nil);
+        [arg1 writeToFile:path atomically:YES]; 
+	return imageOriginInitData.call(this, arg1);
+    }
+}
+function hook_UIImage_initWithDataScale() {
+    imageOriginInitDataScale = UIImage.prototype['initWithData:scale:'];
+
+    UIImage.prototype['initWithData:scale:'] = function(arg1, arg2) {
+        var path = [new NSString initWithFormat:@"%@/Documents/%@", NSHomeDirectory, [new NSUUID init].UUIDString, nil];
+        NSLog(@"UIImage.prototype['initWithData:scale:'] %@", path, nil);
+        [arg1 writeToFile:path atomically:YES]; 
+	return imageOriginInitDataScale.call(this, arg1, arg2);
+    }
 }
