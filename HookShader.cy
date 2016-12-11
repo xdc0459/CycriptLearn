@@ -29,19 +29,18 @@ function hook_glShaderSource() {
 }
 function hook_glShaderSource2() {
     MS.hookFunction(glShaderSource, function(shader, count, pstring, plength) {
-        var file = (*old_glShaderSource)(shader, count, pstring, plength);
+        (*old_glShaderSource)(shader, count, pstring, plength);
         for (var i = 0; i < count; ++i) {
             var length = plength[i];
             if (lenght > 0) {
-                var p = malloc(lenght+1);
+                var p = malloc(lenght+2);
                 if (p != NULL) {
-                    memset(p, 0x00, lenght+1); 
-                    memcpy(p, plength[i], lenght);
-                    NSLog([new NSString initWithFormat:@"glShaderSource shader at index %i : \n%@", i, [new  NSString initWithUTF8String:p], nil]);
+                    memset(p, 0x00, lenght+2); 
+                    memcpy(p, pstring[i], lenght);
+                    NSLog([new NSString initWithFormat:@"shader %i:\n%@", i, [new  NSString initWithUTF8String:p], nil]);
                     free(p);
                 }
             }
         }
-        return file;   
     }, old_glShaderSource);
 }
