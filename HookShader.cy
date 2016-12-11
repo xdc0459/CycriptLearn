@@ -19,28 +19,42 @@ extern "C" void glShaderSource(GLuint shader, GLsizei count, const GLchar* const
 
 // var oldgl= {};
 // MS.hookFunction(glShaderSource, function(shader, count, pstring, length) { (*oldgl)(shader, count, pstring, length); NSLog([new NSString initWithFormat:@"\n%@", [new  NSString initWithUTF8String:*pstring], nil]); }, oldgl)
-
+// call hook_glShaderSource or hook_glShaderSource2 only once
 var old_glShaderSource = {};
 function hook_glShaderSource() {
     MS.hookFunction(glShaderSource, function(shader, count, pstring, plength) {
         (*old_glShaderSource)(shader, count, pstring, plength);
-	NSLog([new NSString initWithFormat:@"\n%@", [new  NSString initWithUTF8String:*pstring], nil]); 
+	NSLog([new NSString initWithFormat:@"count %i;\n%@", count,[new NSString initWithUTF8String:*pstring], nil]); 
     }, old_glShaderSource);
 }
 function hook_glShaderSource2() {
     MS.hookFunction(glShaderSource, function(shader, count, pstring, plength) {
-        (*old_glShaderSource)(shader, count, pstring, plength);
-        for (var i = 0; i < count; ++i) {
-            var length = plength[i];
-            if (lenght > 0) {
-                var p = malloc(lenght+2);
-                if (p != NULL) {
-                    memset(p, 0x00, lenght+2); 
-                    memcpy(p, pstring[i], lenght);
-                    NSLog([new NSString initWithFormat:@"shader %i:\n%@", i, [new  NSString initWithUTF8String:p], nil]);
-                    free(p);
+	if (count > 1 && plength != NULL) {
+            NSLog([new NSString initWithFormat:@"shader count %i", count, nil]);
+            for (var i = 0; i < count; ++i)
+	    {
+                var length = *(plength+i);
+                if (lenght > 0) {
+                    var p = malloc(lenght+1);
+                    if (p != NULL) {
+                        memset(p, 0x00, lenght+1); memcpy(p, *(pstring+i), lenght); // strncpy
+                        NSLog([new NSString initWithFormat:@"shader:\n%@", [new NSString initWithUTF8String:p], nil]);
+                        free(p);
+                    }
                 }
             }
+        } else if (pstring != NULL) {
+            NSLog([new NSString initWithFormat:@"count %i;\n%@", count,[new NSString initWithUTF8String:*pstring], nil]);
         }
+	(*old_glShaderSource)(shader, count, pstring, plength);
     }, old_glShaderSource);
+}
+
+// void glShaderBinary (GLsizei n, const GLuint* shaders, GLenum binaryformat, const GLvoid* binary, GLsizei length)  
+var old_glShaderBinary = {};
+function hook_glShaderBinary() {
+    MS.hookFunction(glShaderBinary, function(n, shaders, binaryformat, binary, length) {
+        (*old_glShaderBinary)(n, shaders, binaryformat, binary, length);
+	NSLog([new NSString initWithFormat:@"glShaderBinary count %i, binaryformat:%i; \n%@", n, binaryformat, [new NSData initWithBytes:binary length:length], nil]); 
+    }, old_glShaderBinary);
 }
