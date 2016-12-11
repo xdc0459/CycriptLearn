@@ -24,13 +24,15 @@ var old_glShaderSource = {};
 function hook_glShaderSource() {
     MS.hookFunction(glShaderSource, function(shader, count, pstring, plength) {
         (*old_glShaderSource)(shader, count, pstring, plength);
-	NSLog([new NSString initWithFormat:@"count %i;\n%@", count,[new NSString initWithUTF8String:*pstring], nil]); 
+	// NSLog(@"", a, nil)， if don't has a more 'nil' argument, will crash
+	// 如果不多出一个nil参数的话，会crash	
+        NSLog([new NSString initWithFormat:@"count %i;\n%@", count,[new NSString initWithUTF8String:*pstring], nil]);
     }, old_glShaderSource);
 }
 function hook_glShaderSource2() {
     MS.hookFunction(glShaderSource, function(shader, count, pstring, plength) {
 	if (count > 1 && plength != NULL) {
-            NSLog([new NSString initWithFormat:@"shader count %i", count, nil]);
+            //NSLog([new NSString initWithFormat:@"shader count %i", count, nil]);
             for (var i = 0; i < count; ++i)
 	    {
                 var length = *(plength+i);
@@ -38,12 +40,16 @@ function hook_glShaderSource2() {
                     var p = malloc(lenght+1);
                     if (p != NULL) {
                         memset(p, 0x00, lenght+1); memcpy(p, *(pstring+i), lenght); // strncpy
+	                // NSLog(@"", a, nil)， if don't has a more 'nil' argument, will crash
+	                // 如果不多出一个nil参数的话，会crash
                         NSLog([new NSString initWithFormat:@"shader:\n%@", [new NSString initWithUTF8String:p], nil]);
                         free(p);
                     }
                 }
             }
         } else if (pstring != NULL) {
+	    // NSLog(@"", a, nil)， if don't has a more 'nil' argument, will crash
+	    // 如果不多出一个nil参数的话，会crash
             NSLog([new NSString initWithFormat:@"count %i;\n%@", count,[new NSString initWithUTF8String:*pstring], nil]);
         }
 	(*old_glShaderSource)(shader, count, pstring, plength);
@@ -55,6 +61,8 @@ var old_glShaderBinary = {};
 function hook_glShaderBinary() {
     MS.hookFunction(glShaderBinary, function(n, shaders, binaryformat, binary, length) {
         (*old_glShaderBinary)(n, shaders, binaryformat, binary, length);
+	// NSLog(@"", a, nil)， if don't has a more 'nil' argument, will crash
+	// 如果不多出一个nil参数的话，会crash
 	NSLog([new NSString initWithFormat:@"glShaderBinary count %i, binaryformat:%i; \n%@", n, binaryformat, [new NSData initWithBytes:binary length:length], nil]); 
     }, old_glShaderBinary);
 }
