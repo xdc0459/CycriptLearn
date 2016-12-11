@@ -27,6 +27,22 @@ function printMethods(className, isa) {
     return methodsArray;
 }
 
+function printFirstViewControllerList() {
+    var window = [[[UIApplication sharedApplication] delegate] window];
+    if (window == nil) {
+        window = [[UIApplication sharedApplication] keyWindow];
+    }
+    var controller = [window rootViewController];
+    while (controller) {
+        if ([[controller childViewControllers] count] > 0) {
+            NSLog(@"[#%p %@], child=%@", controller, NSStringFromClass([controller class]), [controller childViewControllers]);
+        } else {
+            NSLog(@"[#%p %@]", controller, NSStringFromClass([controller class]));
+        }
+        controller = [controller presentedViewController];
+    }
+}
+
 @import com.saurik.substrate.MS;
 extern "C" void glShaderSource(GLuint shader, GLsizei count, const GLchar* const *string, const GLint* length);
 
