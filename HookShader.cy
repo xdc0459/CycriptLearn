@@ -108,19 +108,25 @@ function hook_CIFilter_filterWithName_withInputParameters() {
 function hook_UIImage_initWithData() {
     imageOriginInitData = UIImage.prototype['initWithData:'];
     UIImage.prototype['initWithData:'] = function(arg1) {
-        var path = [new NSString initWithFormat:@"%@/Documents/hookUIImage/%@", NSHomeDirectory(), [new NSUUID init].UUIDString, nil];
-        NSLog(@"UIImage.prototype['initWithData:'] %@", path, nil);
-        [arg1 writeToFile:path atomically:YES]; 
-        return imageOriginInitData.call(this, arg1);
+        var result = imageOriginInitData.call(this, arg1);
+        if (result != nil) {
+            var path = [new NSString initWithFormat:@"%@/Documents/%@", NSHomeDirectory(), [new NSUUID init].UUIDString, nil];
+            NSLog(@"UIImage.prototype['initWithData:'] %@", path, nil);
+           [arg1 writeToFile:path atomically:YES]; 
+	}
+        return result;
     }
 }
 function hook_UIImage_initWithDataScale() {
     imageOriginInitDataScale = UIImage.prototype['initWithData:scale:'];
 
     UIImage.prototype['initWithData:scale:'] = function(arg1, arg2) {
-        var path = [new NSString initWithFormat:@"%@/Documents/hookUIImage/%@", NSHomeDirectory(), [new NSUUID init].UUIDString, nil];
-        NSLog(@"UIImage.prototype['initWithData:scale:'] %@", path, nil);
-        [arg1 writeToFile:path atomically:YES]; 
-	return imageOriginInitDataScale.call(this, arg1, arg2);
+        var result = imageOriginInitDataScale.call(this, arg1, arg2);
+        if (result != nil) {
+             var path = [new NSString initWithFormat:@"%@/Documents/%@", NSHomeDirectory(), [new NSUUID init].UUIDString, nil];
+             NSLog(@"UIImage.prototype['initWithData:scale:'] %@", path, nil);
+             [arg1 writeToFile:path atomically:YES]; 
+	}
+        return result;
     }
 }
