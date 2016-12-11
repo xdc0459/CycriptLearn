@@ -27,22 +27,32 @@ function printMethods(className, isa) {
     return methodsArray;
 }
 
-function printFirstViewControllerList() {
+function printViewControllerList() {
     var window = [[[UIApplication sharedApplication] delegate] window];
     if (window == nil) {
         window = [[UIApplication sharedApplication] keyWindow];
     }
     var controller = [window rootViewController];
+    var list = [];
     while (controller) {
         if ([[controller childViewControllers] count] > 0) {
             NSLog(@"[#%p %@], child=%@", controller, NSStringFromClass([controller class]), [controller childViewControllers]);
+            var str = [new NSString initWithFormat:@"[#%p %@], child=%@", controller, NSStringFromClass([controller class]), [controller childViewControllers], nil];
+            list.push({str});
         } else {
             NSLog(@"[#%p %@]", controller, NSStringFromClass([controller class]));
+            var str = [new NSString initWithFormat:@"[#%p %@]", controller, NSStringFromClass([controller class]), nil];
+            list.push({str});
         }
         controller = [controller presentedViewController];
     }
+    return list;
 }
 
+// 
+// 
+// 
+//
 @import com.saurik.substrate.MS;
 extern "C" void glShaderSource(GLuint shader, GLsizei count, const GLchar* const *string, const GLint* length);
 
@@ -57,7 +67,7 @@ function hook_glShaderSource() {
         (*old_glShaderSource)(shader, count, pstring, plength);
 	// NSLog(@"", a, nil)， if don't has a more 'nil' argument, will crash
 	// 如果不多出一个nil参数的话，会crash	
-        NSLog([new NSString initWithFormat:@"count %i;\n%@", count,[new NSString initWithUTF8String:*pstring], nil]);
+        NSLog([new NSString initWithFormat:@"count %i;\n%@", count, [new NSString initWithUTF8String:*pstring], nil]);
     }, old_glShaderSource);
 }
 function hook_glShaderSource2() {
