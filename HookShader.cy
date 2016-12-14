@@ -27,6 +27,47 @@ function printMethods(className, isa) {
     return methodsArray;
 }
 
+@implementation UIViewController (ChildShow)
+- (var)gx_getViewControllerDesc
+{
+    var self = this;
+    var str = [NSMutableString stringWithFormat:@"[#%p %@]", self, NSStringFromClass([self class])];
+    if ([[self childViewControllers] count] > 0) {
+        if ([self isKindOfClass:[UITabBarController class]]) {
+            [str appendFormat:@", selIndex=%tu, childs=", [self selectedIndex]];
+        } else {
+            [str appendFormat:@", childs=["];
+        }
+        
+        for (int i = 0; i < [[self childViewControllers] count]; ++i) {
+            var child = [self childViewControllers][i];
+            [str appendFormat:@"{%i:%@}", i, [child gx_getViewControllerDesc]];
+        }
+        [str appendFormat:@"]."];
+    }
+    return str;
+}
+- (void)gx_showViewControllerList:(var)window
+{
+    var controller = [window rootViewController];
+    controller = controller != nil ? controller : [[[[UIApplication sharedApplication] delegate] window] rootViewController];
+    controller = controller != nil ? controller : [[[UIApplication sharedApplication] keyWindow] rootViewController];
+    while (controller) {
+        NSLog(@"%@", [controller gx_getViewControllerDesc]);
+        controller = [controller presentedViewController];
+    }
+}
+@end
+
+function printSubclassOfClass(superClass) {
+    for (c in ObjectiveC.classes) {
+        if (class_getSuperclass(c) && [c isSubclassOfClass:superClass]) {
+            NSLog(@"%@", NSStringFromClass(c), nil);
+        }
+    }
+}
+[c for each (c in ObjectiveC.classes) if (class_getSuperclass(c) && [c isSubclassOfClass:UIView])]
+	      
 function printViewControllerList() {
     var window = [[[UIApplication sharedApplication] delegate] window];
     if (window == nil) {
