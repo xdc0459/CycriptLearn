@@ -27,9 +27,97 @@ function printMethods(className, isa) {
     return methodsArray;
 }
 
+function gx_showView(window, fileName, showLog) {
+    window = window != nil ? window : [[[UIApplication sharedApplication] delegate] window];
+    window = window != nil ? window : [[UIApplication sharedApplication] keyWindow];
+    window = window != nil ? window : [[[UIApplication sharedApplication] windows] firstObject];
+    var recursivStr = window.recursiveDescription();
+    if ([recursivStr length] > 0 && [fileName length] > 0) {
+        var path = [[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"] stringByAppendingPathComponent:fileName];
+	// NSUTF8StringEncoding = 4
+        if ([recursivStr writeToFile:path atomically:YES encoding:4 error:nil]){
+	    if (!showLog) {
+                recursivStr = [new NSString initWithFormat:@"had write to file : %@", path, nil];
+	    }
+	} else {
+            
+	}
+    }
+    return recursivStr.toString();
+}
+
+//[c for each (c in ObjectiveC.classes) if (class_getSuperclass(c) && [c isSubclassOfClass:UIView])]
+function gx_printSubclassOfClass(superClass) {
+    var string = [new NSMutableString init];
+    for each (c in ObjectiveC.classes) {
+        if (class_getSuperclass(c) && [c isSubclassOfClass:superClass]) {
+            [string appendFormat:@"%@, ", NSStringFromClass(c), nil];
+        }
+    }
+    return string;
+}
+    //var numClasses = objc_getClassList(NULL, 0);
+    //var classSize = 8;//is64Bit() ? 8 : 4;
+    //var pclasses = malloc(classSize * numClasses);
+    //if (pclasses == NULL) return nil;
+    //memset(pclasses, 0, classSize * numClasses)
+    //numClasses = objc_getClassList(pclasses, numClasses);
+function gx_printAllSubClassOfClass2(superClass) {
+    var count = new new Type("I");
+    var pclasses = objc_copyClassList(count);
+    var numClasses = *count;
+    if (pclasses == NULL) return nil;
+    
+    var string = [new NSMutableString init];
+    for (var i = 0; i < numClasses; i++) {
+        var temp = pclasses[i];
+        if (temp != NULL) {
+	    if (class_getSuperclass(temp))
+            if (superClass != NULL) {
+                if ([temp isSubclassOfClass:superClass]) {
+                    [string appendFormat:@"%@, ", NSStringFromClass(temp), nil];
+		}
+            } else {
+                [string appendFormat:@"%@, ", NSStringFromClass(temp), nil];
+            }
+        }
+    }
+    free(pclasses);
+    return string;
+}
+/*
+function gx_printAllSubClassFromClass2(superClass) {
+    int numClasses = objc_getClassList(NULL, 0);
+    var pclasses = malloc((is64Bit() ? 8 : 4) * numClasses);
+    if (pclasses == NULL) return nil;
+    numClasses = objc_getClassList(pclasses, numClasses);
+    
+    var string = [new NSMutableString init];
+    for (int i = 0; i < numClasses; i++) {
+        var class = pclasses[i];
+        if (class != NULL) {
+            if (superClass != NULL) {
+                //if ([class isSubclassOfClass:superClass])
+                Class sClass = class;
+                while (sClass != NULL && sClass != [NSObject class]) {
+                    if (sClass == superClass) {
+                        [string appendFormat:@"%@,", NSStringFromClass(class)];
+                        break;
+                    }
+                    sClass = class_getSuperclass(sClass);
+                }
+            } else {
+                [string appendFormat:@"%@,", NSStringFromClass(class)];
+            }
+        }
+    }
+    free(pclasses);
+    return string;
+}
+*/
+
 @implementation UIViewController (ChildShow)
-- (var)gx_getViewControllerDesc
-{
+- gx_printViewControllerDesc {
     var self = this;
     var str = [NSMutableString stringWithFormat:@"[#%p %@]", self, NSStringFromClass([self class])];
     if ([[self childViewControllers] count] > 0) {
@@ -39,40 +127,25 @@ function printMethods(className, isa) {
             [str appendFormat:@", childs=["];
         }
         
-        for (int i = 0; i < [[self childViewControllers] count]; ++i) {
+        for (var i = 0; i < [[self childViewControllers] count]; ++i) {
             var child = [self childViewControllers][i];
-            [str appendFormat:@"{%i:%@}", i, [child gx_getViewControllerDesc]];
+            [str appendFormat:@"{%i:%@}", i, [child gx_printViewControllerDesc]];
         }
         [str appendFormat:@"]."];
     }
     return str;
 }
-- (void)gx_showViewControllerList:(var)window
++ gx_printViewControllerList:(UIWindow *)window
 {
-    var controller = [window rootViewController];
-    controller = controller != nil ? controller : [[[[UIApplication sharedApplication] delegate] window] rootViewController];
-    controller = controller != nil ? controller : [[[UIApplication sharedApplication] keyWindow] rootViewController];
-    while (controller) {
-        NSLog(@"%@", [controller gx_getViewControllerDesc]);
-        controller = [controller presentedViewController];
-    }
+    return gx_printViewControllerList(window);
 }
 @end
-
-function printSubclassOfClass(superClass) {
-    for (c in ObjectiveC.classes) {
-        if (class_getSuperclass(c) && [c isSubclassOfClass:superClass]) {
-            NSLog(@"%@", NSStringFromClass(c), nil);
-        }
-    }
-}
-[c for each (c in ObjectiveC.classes) if (class_getSuperclass(c) && [c isSubclassOfClass:UIView])]
 	      
-function printViewControllerList() {
-    var window = [[[UIApplication sharedApplication] delegate] window];
-    if (window == nil) {
-        window = [[UIApplication sharedApplication] keyWindow];
-    }
+function gx_printViewControllerList(UIWindow *window) {
+    window = window != nil ? window : [[[UIApplication sharedApplication] delegate] window];
+    window = window != nil ? window : [[UIApplication sharedApplication] keyWindow];
+    window = window != nil ? window : [[[UIApplication sharedApplication] windows] firstObject];
+    
     var controller = [window rootViewController];
     var list = [];
     while (controller) {
