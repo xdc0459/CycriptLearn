@@ -57,13 +57,14 @@ function gx_printSubclassOfClass(superClass) {
     }
     return string;
 }
+
+function gx_printAllSubClassOfClass2(superClass) {
     //var numClasses = objc_getClassList(NULL, 0);
     //var classSize = 8;//is64Bit() ? 8 : 4;
     //var pclasses = malloc(classSize * numClasses);
     //if (pclasses == NULL) return nil;
     //memset(pclasses, 0, classSize * numClasses)
     //numClasses = objc_getClassList(pclasses, numClasses);
-function gx_printAllSubClassOfClass2(superClass) {
     var count = new new Type("I");
     var pclasses = objc_copyClassList(count);
     var numClasses = *count;
@@ -136,8 +137,7 @@ function gx_printAllSubClassFromClass2(superClass) {
     }
     return str;
 }
-+ gx_printViewControllerList:(UIWindow *)window
-{
++ gx_printViewControllerList:(UIWindow *)window {
     return gx_printViewControllerList(window);
 }
 @end
@@ -169,15 +169,15 @@ function gx_printViewControllerList(UIWindow *window) {
 // 
 //
 @import com.saurik.substrate.MS;
-extern "C" void glShaderSource(GLuint shader, GLsizei count, const GLchar* const *string, const GLint* length);
 
+extern "C" void glShaderSource(GLuint shader, GLsizei count, const GLchar* const *string, const GLint* length);
 // var oldgl= {};
 // MS.hookFunction(glShaderSource, function(shader, count, pstring, length) { (*oldgl)(shader, count, pstring, length); NSLog([new NSString initWithFormat:@"\n%@", [new  NSString initWithUTF8String:*pstring], nil]); }, oldgl)
 // extern "C" void glShaderSource(GLuint shader, GLsizei count, const GLchar* const *string, const GLint* length);
 // void glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid* pixels);
 // call hook_glShaderSource or hook_glShaderSource2 only once
 var old_glShaderSource = {};
-function hook_glShaderSource() {
+function gx_hook_glShaderSource() {
     MS.hookFunction(glShaderSource, function(shader, count, pstring, plength) {
         (*old_glShaderSource)(shader, count, pstring, plength);
 	// NSLog(@"", a, nil)， if don't has a more 'nil' argument, will crash
@@ -185,7 +185,7 @@ function hook_glShaderSource() {
         NSLog([new NSString initWithFormat:@"count %i;\n%@", count, [new NSString initWithUTF8String:*pstring], nil]);
     }, old_glShaderSource);
 }
-function hook_glShaderSource2() {
+function gx_hook_glShaderSource2() {
     MS.hookFunction(glShaderSource, function(shader, count, pstring, plength) {
 	if (count > 1 && plength != NULL) {
             //NSLog([new NSString initWithFormat:@"shader count %i", count, nil]);
@@ -213,7 +213,7 @@ function hook_glShaderSource2() {
 }
 // void glShaderBinary (GLsizei n, const GLuint* shaders, GLenum binaryformat, const GLvoid* binary, GLsizei length)  
 var old_glShaderBinary = {};
-function hook_glShaderBinary() {
+function gx_hook_glShaderBinary() {
     MS.hookFunction(glShaderBinary, function(n, shaders, binaryformat, binary, length) {
         (*old_glShaderBinary)(n, shaders, binaryformat, binary, length);
 	// NSLog(@"", a, nil)， if don't has a more 'nil' argument, will crash
@@ -235,7 +235,7 @@ function gxhook_CIFilter_filterWithName() {
 }
 
 var old_CIFilter_filterWithName_withInputParameters = {};
-function gxhook_CIFilter_filterWithName_withInputParameters() {
+function gx_hook_CIFilter_filterWithName_withInputParameters() {
     MS.hookMessage(CIFilter->isa, @selector(filterWithName:withInputParameters:), function(arg1, params) {
        NSLog(@"CIFilter filterWithName : %@, %@", arg1, params, nil);
        return old_CIFilter_filterWithName_withInputParameters->call(this, arg1, params);
@@ -249,35 +249,36 @@ var gx_cacheImagePath = [NSHomeDirectory() stringByAppendingPathComponent:@"Docu
 // - (nullable instancetype)initWithData:(NSData *)data
 // var imageOriginInitData;
 // function hook_UIImage_initWithData() {var imageOriginInitData = UIImage.prototype['initWithData:'];UIImage.prototype['initWithData:'] = function(arg1) {var path = [new NSString initWithFormat:@"%@/%@", gx_cacheImagePath, [new NSUUID init].UUIDString, nil];NSLog(@"UIImage.prototype['initWithData:'] %@", path, nil);[arg1 writeToFile:path atomically:YES]; return imageOriginInitData.call(this, arg1);}}
-function gxhook_UIImage_initWithData() {
+function gx_hook_UIImage_initWithData() {
     imageOriginInitData = UIImage.prototype['initWithData:'];
     UIImage.prototype['initWithData:'] = function(arg1) {
         var result = imageOriginInitData.call(this, arg1);
         if (result != nil) {
             var path = [new NSString initWithFormat:@"%@/%@", gx_cacheImagePath, [new NSUUID init].UUIDString, nil];
             NSLog(@"UIImage.prototype['initWithData:'] %@", path, nil);
-           [arg1 writeToFile:path atomically:YES]; 
-	}
+            [arg1 writeToFile:path atomically:YES]; 
+        }
         return result;
     }
 }
 
-function gxhook_UIImage_initWithDataScale() {
+// - (nullable instancetype)initWithData:(NSData *)data scale:(CGFloat)scale
+function gx_hook_UIImage_initWithDataScale() {
     imageOriginInitDataScale = UIImage.prototype['initWithData:scale:'];
-
     UIImage.prototype['initWithData:scale:'] = function(arg1, arg2) {
         var result = imageOriginInitDataScale.call(this, arg1, arg2);
         if (result != nil) {
              var path = [new NSString initWithFormat:@"%@/%@", gx_cacheImagePath, [new NSUUID init].UUIDString, nil];
              NSLog(@"UIImage.prototype['initWithData:scale:'] %@", path, nil);
              [arg1 writeToFile:path atomically:YES]; 
-	}
+        }
         return result;
     }
 }
 
 // GPUImageFilter
-function gxhook_GPUImageFilter_initWithShader() {
+// - (id)initWithVertexShaderFromString:(NSString *)vertexShaderString fragmentShaderFromString:(NSString *)fragmentShaderString
+function gx_hook_GPUImageFilter_initWithShader() {
     filterOriginInitShader = GPUImageFilter.prototype['initWithVertexShaderFromString:fragmentShaderFromString:'];
     GPUImageFilter.prototype['initWithVertexShaderFromString:fragmentShaderFromString:'] = function(arg1, arg2) {
         var result = filterOriginInitShader.call(this, arg1, arg2);
@@ -285,8 +286,22 @@ function gxhook_GPUImageFilter_initWithShader() {
         return result;
     }
 }
-
-function gxhook_GPUImageFilter_setInputTexture() {
+	      
+// GPUImagePicture
+// - (id)initWithCGImage:(CGImageRef)newImageSource smoothlyScaleOutput:(BOOL)smoothlyScaleOutput removePremultiplication:(BOOL)removePremultiplication
+function gx_hook_GPUImagePicture_initWithCGImage() {
+    filterOriginSetTexture = GPUImageFilter.prototype['initWithCGImage:smoothlyScaleOutput:removePremultiplication:'];
+    GPUImageFilter.prototype['initWithCGImage:smoothlyScaleOutput:removePremultiplication:'] = function(arg1, arg2, arg3) {
+        filterOriginSetTexture.call(this, arg1, arg2, arg3);
+        if (arg1 != nil) {
+            var path = [new NSString initWithFormat:@"%@/%@_%@.png", gx_cacheImagePath, NSStringFromClass(this), [NSDate date], nil];
+            [UIImagePNGRepresentation(arg1) writeToFile:path atomically:YES]
+        }
+    }
+}
+	    
+//
+function gx_hook_GPUImageFilter_setInputTexture() {
     filterOriginSetTexture = GPUImageFilter.prototype['setInputTextureformImage:atIndex:'];
     GPUImageFilter.prototype['setInputTextureformImage:atIndex:'] = function(arg1, arg2) {
         filterOriginSetTexture.call(this, arg1, arg2);
