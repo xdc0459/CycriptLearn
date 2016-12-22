@@ -15,7 +15,9 @@ function is64Bit(){
 	return *is64Bit;
 }
 
-function gx_printMethods2(classObj, fileName, showLog) {
+
+
+function gx_printMethods(classObj, fileName, showLog) {
     var string = [new NSMutableString init];
     var count = new new Type("I");
     var methods = class_copyMethodList(classObj, count);
@@ -121,7 +123,7 @@ function gx_printAllSubClassFromClass2(superClass) {
 
 @implementation UIViewController (ChildShow)
 - gx_printViewControllerDesc {
-    var self = this;
+    //var self = this;
     var str = [NSMutableString stringWithFormat:@"[#%p %@]", self, NSStringFromClass([self class])];
     if ([[self childViewControllers] count] > 0) {
         if ([self isKindOfClass:[UITabBarController class]]) {
@@ -276,6 +278,53 @@ function gx_hook_UIImage_initWithDataScale() {
         return result;
     }
 }
+		   
+@implementation GPUImageOutput (ChildShow)
+- gx_FilterDescInternal {
+    return [NSString stringWithFormat:@"%@:%p", NSStringFromClass([self class]), self];
+}
+- gx_printFilterList:(NSMutableString *)string depth:(int)depth {
+    var spaceNumPerDepth = 4;
+    string = string != nil ? string : [NSMutableString string];
+    [string appendFormat:@"%*s{", depth * spaceNumPerDepth, ""];
+    [string appendFormat:@"%@", [self gx_FilterDescInternal]];
+    
+    if ([self isKindOfClass:[GPUImageFilterGroup class]]) {
+        var subfilters = [self valueForKey:@"filters"];
+        if (subfilters != nil && [subfilters count] > 0) {
+            [string appendFormat:@" = ["];
+            for (var i = 0; i < [subfilters count]; ++i) {
+                [string appendFormat:@" {%@}, ", [subfilters[i] gx_FilterDescInternal]];
+            }
+            [string appendFormat:@"]"];
+        }
+    }
+    [string appendFormat:@"};"];
+    
+    if ([self isKindOfClass:[GPUImageOutput class]]) {
+        var target = [self targets];
+        if (target != nil && [target count] > 0) {
+            [string appendFormat:@" targets=>\n"];
+            for (var i = 0; i < [target count]; ++i) {
+                var subTar = target[i];
+                if ([subTar isKindOfClass:[GPUImageOutput class]]) {
+                    [subTar gx_printFilterList:string depth:(depth+1)];
+                } else {
+                    [string appendFormat:@"%*s{%@:%p},", (depth+1) * spaceNumPerDepth, "", NSStringFromClass([subTar class]), subTar];
+                }
+            }
+        } else {
+            [string appendFormat:@"\n"];
+	}
+    } else {
+        [string appendFormat:@"\n"];
+    }
+    return string;
+}
+- gx_printFilterList {
+    return [self gx_printFilterList:nil depth:0];
+}
+@end
 
 // GPUImageFilter
 // - (id)initWithVertexShaderFromString:(NSString *)vertexShaderString fragmentShaderFromString:(NSString *)fragmentShaderString
@@ -312,4 +361,5 @@ function gx_hook_GPUImageFilter_setInputTexture() {
         }
     }
 }
+	    
 
