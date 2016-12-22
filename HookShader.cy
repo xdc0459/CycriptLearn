@@ -15,17 +15,18 @@ function is64Bit(){
 	return *is64Bit;
 }
 
-function gx_printMethods(className, isa) {
+function gx_printMethods2(classObj, fileName, showLog) {
+    var string = [new NSMutableString init];
     var count = new new Type("I");
-    var classObj = (isa != undefined) ? objc_getClass(className)->isa : objc_getClass(className);
     var methods = class_copyMethodList(classObj, count);
-    var methodsArray = [];
     for(var i = 0; i < *count; i++) {
         var method = methods[i];
-        methodsArray.push({selector:method_getName(method), implementation:method_getImplementation(method)});
+        if (method != NULL) {
+           [string appendFormat:@"{selector:%s, imp:%p}\n", method_getName(method), method_getImplementation(method), nil];
+        }
     }
     free(methods);
-    return methodsArray;
+    return string;
 }
 
 function gx_printView(window, fileName, showLog) {
@@ -33,7 +34,7 @@ function gx_printView(window, fileName, showLog) {
     window = window != nil ? window : [[UIApplication sharedApplication] keyWindow];
     window = window != nil ? window : [[[UIApplication sharedApplication] windows] firstObject];
     var recursivStr = window.recursiveDescription();
-    if ([recursivStr length] > 0 && [fileName length] > 0) {
+    if (recursivStr && [recursivStr length] > 0 && fileName != nil && [fileName length] > 0) {
         var path = [[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"] stringByAppendingPathComponent:fileName];
 	// NSUTF8StringEncoding = 4
         if ([recursivStr writeToFile:path atomically:YES encoding:4 error:nil]){
@@ -142,7 +143,7 @@ function gx_printAllSubClassFromClass2(superClass) {
 }
 @end
 	      
-function gx_printViewControllerList(UIWindow *window) {
+function gx_printViewControllerList(window) {
     window = window != nil ? window : [[[UIApplication sharedApplication] delegate] window];
     window = window != nil ? window : [[UIApplication sharedApplication] keyWindow];
     window = window != nil ? window : [[[UIApplication sharedApplication] windows] firstObject];
@@ -227,7 +228,7 @@ function gx_hook_glShaderBinary() {
 // + (nullable CIFilter *)filterWithName:(NSString *)name withInputParameters:(nullable NSDictionary<NSString *,id> *)params
 // TODO : a qusetion = I don't know how to hook 'filterWithName:keysAndValues:key0, ...'
 var old_CIFilter_filterWithName = {};
-function gxhook_CIFilter_filterWithName() {
+function gx_hook_CIFilter_filterWithName() {
     MS.hookMessage(CIFilter->isa, @selector(filterWithName:), function(arg1) {
        NSLog(@"%@", arg1, nil);
        return old_CIFilter_filterWithName->call(this, arg1);
