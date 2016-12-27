@@ -279,6 +279,28 @@ function gx_hook_UIImage_initWithDataScale() {
     }
 }
 		   
+// NSData  initWithContentsOfFile:(NSString *)path options:(NSDataReadingOptions)readOptionsMask error:(NSError **)errorPtr
+function gx_hook_NSData_initWithContentsOfFileOptionError() {
+    dataOriginInitFileOptionError = NSData.prototype['initWithContentsOfFile:options:error:'];
+    NSData.prototype['initWithContentsOfFile:options:error:'] = function(arg1, arg2, arg3) {
+        var result = dataOriginInitFileOptionError.call(this, arg1, arg2, arg3);
+        if (result != nil) {
+             NSLog(@"NSData.prototype['initWithContentsOfFile:options:error:'] %@", arg1, nil);
+        }
+        return result;
+    }
+}
+function gx_hook_NSData_initWithContentsOfFile() {
+    dataOriginInitFile = NSData.prototype['initWithContentsOfFile:'];
+    NSData.prototype['initWithContentsOfFile:'] = function(arg1) {
+        var result = dataOriginInitFile.call(this, arg1, arg2, arg3);
+        if (result != nil) {
+             NSLog(@"NSData.prototype['initWithContentsOfFile:'] %@", arg1, nil);
+        }
+        return result;
+    }
+}
+
 @implementation GPUImageOutput (ChildShow)
 - gx_FilterDescInternal {
     return [NSString stringWithFormat:@"%@:%p", NSStringFromClass([self class]), self];
