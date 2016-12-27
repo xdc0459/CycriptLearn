@@ -293,7 +293,7 @@ function gx_hook_NSData_initWithContentsOfFileOptionError() {
 function gx_hook_NSData_initWithContentsOfFile() {
     dataOriginInitFile = NSData.prototype['initWithContentsOfFile:'];
     NSData.prototype['initWithContentsOfFile:'] = function(arg1) {
-        var result = dataOriginInitFile.call(this, arg1, arg2, arg3);
+        var result = dataOriginInitFile.call(this, arg1);
         if (result != nil) {
              NSLog(@"NSData.prototype['initWithContentsOfFile:'] %@", arg1, nil);
         }
