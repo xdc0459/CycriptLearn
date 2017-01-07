@@ -192,6 +192,7 @@ function gx_hook_glShaderSource2() {
     MS.hookFunction(glShaderSource, function(shader, count, pstring, plength) {
 	if (count > 1 && plength != NULL) {
             //NSLog([new NSString initWithFormat:@"shader count %i", count, nil]);
+	    var shadersStr = [new NSMutableString];
             for (var i = 0; i < count; ++i)
 	    {
                 var length = *(plength+i);
@@ -201,10 +202,12 @@ function gx_hook_glShaderSource2() {
                         memset(p, 0x00, lenght+1); memcpy(p, *(pstring+i), lenght); // strncpy
 	                // NSLog(@"", a, nil)， if don't has a more 'nil' argument, will crash
 	                // 如果不多出一个nil参数的话，会crash
-                        NSLog([new NSString initWithFormat:@"shader:\n%@", [new NSString initWithUTF8String:p], nil]);
+			[shadersStr addendFormat:@"shader %i:\n%@", i, [new NSString initWithUTF8String:p], nil];
                         free(p);
                     }
-                }
+                } else {
+		    NSLog([new NSString initWithFormat:@"shader %i:\n%@", i, [new NSString initWithUTF8String:pstring[i]], nil]);
+		}
             }
         } else if (pstring != NULL) {
 	    // NSLog(@"", a, nil)， if don't has a more 'nil' argument, will crash
