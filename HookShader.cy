@@ -16,6 +16,7 @@ function is64Bit(){
 }
 
 
+var gx_spaceNumPerDepth = 4;
 
 function gx_printMethods(classObj, fileName, showLog) {
     var string = [new NSMutableString init];
@@ -122,23 +123,26 @@ function gx_printAllSubClassFromClass2(superClass) {
 */
 
 @implementation UIViewController (ChildShow)
-- gx_printViewControllerDesc {
+- gx_printViewControllerDesc:(int)depth {
     //var self = this;
-    var str = [NSMutableString stringWithFormat:@"[#%p %@]", self, NSStringFromClass([self class])];
+    var str = [NSMutableString stringWithFormat:@"%*s[#%p %@]", depth*gx_spaceNumPerDepth, "", self, NSStringFromClass([self class])];
     if ([[self childViewControllers] count] > 0) {
         if ([self isKindOfClass:[UITabBarController class]]) {
-            [str appendFormat:@", selIndex=%tu, childs=", [self selectedIndex]];
+            [str appendFormat:@", selIndex=%tu, childs:\n", [self selectedIndex]];
         } else {
-            [str appendFormat:@", childs=["];
+            [str appendFormat:@", childs:\n"];
         }
         
         for (var i = 0; i < [[self childViewControllers] count]; ++i) {
             var child = [self childViewControllers][i];
-            [str appendFormat:@"{%i:%@}", i, [child gx_printViewControllerDesc]];
+            [str appendFormat:@"%@", [child gx_printViewControllerDesc:(depth+1)]];
         }
-        [str appendFormat:@"]."];
     }
+    [str appendFormat:@"\n"];
     return str;
+}
+- gx_printViewControllerDesc {
+    return [self gx_printViewControllerDesc:0];
 }
 + gx_printViewControllerList:(UIWindow *)window {
     return gx_printViewControllerList(window);
@@ -151,20 +155,7 @@ function gx_printViewControllerList(window) {
     window = window != nil ? window : [[[UIApplication sharedApplication] windows] firstObject];
     
     var controller = [window rootViewController];
-    var list = [];
-    while (controller) {
-        if ([[controller childViewControllers] count] > 0) {
-            NSLog(@"[#%p %@], child=%@", controller, NSStringFromClass([controller class]), [controller childViewControllers]);
-            var str = [new NSString initWithFormat:@"[#%p %@], child=%@", controller, NSStringFromClass([controller class]), [controller childViewControllers], nil];
-            list.push({str});
-        } else {
-            NSLog(@"[#%p %@]", controller, NSStringFromClass([controller class]));
-            var str = [new NSString initWithFormat:@"[#%p %@]", controller, NSStringFromClass([controller class]), nil];
-            list.push({str});
-        }
-        controller = [controller presentedViewController];
-    }
-    return list;
+    return [controller gx_printViewControllerDesc];
 }
 
 // 
@@ -309,9 +300,8 @@ function gx_hook_NSData_initWithContentsOfFile() {
     return [NSString stringWithFormat:@"%@:%p", NSStringFromClass([self class]), self];
 }
 - gx_printFilterList:(NSMutableString *)string depth:(int)depth {
-    var spaceNumPerDepth = 4;
     string = string != nil ? string : [NSMutableString string];
-    [string appendFormat:@"%*s{", depth * spaceNumPerDepth, ""];
+    [string appendFormat:@"%*s{", depth * gx_spaceNumPerDepth, ""];
     [string appendFormat:@"%@", [self gx_FilterDescInternal]];
     
     if ([self isKindOfClass:[GPUImageFilterGroup class]]) {
@@ -335,7 +325,7 @@ function gx_hook_NSData_initWithContentsOfFile() {
                 if ([subTar isKindOfClass:[GPUImageOutput class]]) {
                     [subTar gx_printFilterList:string depth:(depth+1)];
                 } else {
-                    [string appendFormat:@"%*s{%@:%p},", (depth+1) * spaceNumPerDepth, "", NSStringFromClass([subTar class]), subTar];
+                    [string appendFormat:@"%*s{%@:%p},", (depth+1) * gx_spaceNumPerDepth, "", NSStringFromClass([subTar class]), subTar];
                 }
             }
         } else {
