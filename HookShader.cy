@@ -128,24 +128,20 @@ function gx_printAllSubClassFromClass2(superClass) {
     var str = [NSMutableString stringWithFormat:@"%*s[#%p %@]", depth*gx_spaceNumPerDepth, "", self, NSStringFromClass([self class])];
     if ([[self childViewControllers] count] > 0) {
         if ([self isKindOfClass:[UITabBarController class]]) {
-            [str appendFormat:@", selIndex=%tu, childs:\n", [self selectedIndex]];
+            [str appendFormat:@", selIndex=%tu, childs:", [self selectedIndex]];
         } else {
-            [str appendFormat:@", childs:\n"];
+            [str appendFormat:@", childs:"];
         }
         
         for (var i = 0; i < [[self childViewControllers] count]; ++i) {
             var child = [self childViewControllers][i];
-            [str appendFormat:@"%@", [child gx_printViewControllerDesc:(depth+1)]];
+            [str appendFormat:@"\n%@", [child gx_printViewControllerDesc:(depth+1)]];
         }
     }
-    [str appendFormat:@"\n"];
     return str;
 }
 - gx_printViewControllerDesc {
     return [self gx_printViewControllerDesc:0];
-}
-+ gx_printViewControllerList:(UIWindow *)window {
-    return gx_printViewControllerList(window);
 }
 @end
 	      
