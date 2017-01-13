@@ -120,38 +120,122 @@ function gx_printAllSubClassFromClass2(superClass) {
     free(pclasses);
     return string;
 }
+NSString * gx_printAllSubClassFromClass(Class superClass)
+{
+    int numClasses = objc_getClassList(NULL, 0);
+    Class * pclasses = (Class *)malloc(sizeof(Class) * numClasses);
+    if (pclasses == NULL) return nil;
+    numClasses = objc_getClassList(pclasses, numClasses);
+    
+    NSMutableString * string = [NSMutableString new];
+    for (int i = 0; i < numClasses; i++) {
+        Class class = pclasses[i];
+        if (class != NULL) {
+            if (superClass != NULL) {
+                //if ([class isSubclassOfClass:superClass])
+                Class sClass = class;
+                while (sClass != NULL && sClass != [NSObject class]) {
+                    if (sClass == superClass) {
+                        [string appendFormat:@"%@,", NSStringFromClass(class)];
+                        break;
+                    }
+                    sClass = class_getSuperclass(sClass);
+                }
+            } else {
+                [string appendFormat:@"%@,", NSStringFromClass(class)];
+            }
+        }
+    }
+    free(pclasses);
+    return string;
+}
 */
 
-@implementation UIViewController (ChildShow)
-- gx_printViewControllerDesc:(int)depth {
+@implementation UIViewController (ChildShowDesc)
+- (NSString *)xdc_viewControllerDesc_internal:(NSString *)perfix
+{
+    return [NSString stringWithFormat:@"%@[#%p %@]", (perfix ? perfix : @""), self, NSStringFromClass([self class])];
+}
+- (NSMutableString *)xdc_printViewControllerDesc:(int)depth perfix:(NSString *)perfix {
     //var self = this;
-    var str = [NSMutableString stringWithFormat:@"%*s[#%p %@]", depth*gx_spaceNumPerDepth, "", self, NSStringFromClass([self class])];
+    var str = [NSMutableString stringWithFormat:@"%*s%@", depth*4, "", [self xdc_viewControllerDesc_internal:perfix]];
     if ([[self childViewControllers] count] > 0) {
         if ([self isKindOfClass:[UITabBarController class]]) {
-            [str appendFormat:@", selIndex=%tu, childs:", [self selectedIndex]];
+            [str appendFormat:@", selIndex=%tu, childs:", [(UITabBarController *)self selectedIndex]];
         } else {
             [str appendFormat:@", childs:"];
         }
         
         for (var i = 0; i < [[self childViewControllers] count]; ++i) {
             var child = [self childViewControllers][i];
-            [str appendFormat:@"\n%@", [child gx_printViewControllerDesc:(depth+1)]];
+            [str appendFormat:@"\n%@", [child xdc_printViewControllerDesc:(depth+1) perfix:@"-"]];
         }
     }
+    
+    var nextController = [self presentedViewController];
+    if (nextController && [nextController presentingViewController] == self)
+    {
+        [str appendFormat:@"\n%@", [nextController xdc_printViewControllerDesc:depth perfix:@"+"]];
+    }
+    
     return str;
 }
-- gx_printViewControllerDesc {
-    return [self gx_printViewControllerDesc:0];
+@end
+@implementation UIView (ChildShowDesc)
+- (NSString *)xdc_viewDesc_internal:(NSString *)perfix
+{
+    return [NSString stringWithFormat:@"%@[#%p %@]", (perfix ? perfix : @""), self, NSStringFromClass([self class])];
+}
+- (NSMutableString *)xdc_printViewDesc:(int)depth perfix:(NSString *)perfix showAllView:(BOOL)showAllView {
+    //var self = this;
+    var str = [NSMutableString string];
+    var nextRes = [self nextResponder];
+    if ([nextRes isKindOfClass:[UIViewController class]] && [nextRes view] == self) {
+        [str appendFormat:@"+ %*s%@ -- %@\n", depth*gx_spaceNumPerDepth, "", [nextRes xdc_viewControllerDesc_internal:nil], [self xdc_viewDesc_internal:perfix]];
+    } else if (showAllView) {
+        [str appendFormat:@"%*s%@\n", depth*gx_spaceNumPerDepth, "", [self xdc_viewDesc_internal:perfix]];
+    }
+    
+    var subViews = [self subviews];
+    for (int i = 0; i < [subViews count]; ++i)
+    {
+        var subView = subViews[i];
+        var string = [subView xdc_printViewDesc:(depth+1) perfix:nil showAllView:showAllView];
+        if (string.length > 0) {
+            [str appendFormat:@"%@", string];
+        }
+    }
+    
+    return str;
 }
 @end
-	      
-function gx_printViewControllerList(window) {
+@implementation UIViewController (ChildShow)
++ (NSMutableString *)gx_printViewControllerList:(UIWindow *)window
+{
     window = window != nil ? window : [[[UIApplication sharedApplication] delegate] window];
     window = window != nil ? window : [[UIApplication sharedApplication] keyWindow];
     window = window != nil ? window : [[[UIApplication sharedApplication] windows] firstObject];
     
     var controller = [window rootViewController];
-    return [controller gx_printViewControllerDesc];
+    return [controller xdc_printViewControllerDesc:0 perfix:@"+"];
+}
++ (NSMutableString *)gx_printCurrentShowViewControllers:(UIWindow *)window showAllView:(BOOL)showAllView
+{
+    window = window != nil ? window : [[[UIApplication sharedApplication] delegate] window];
+    window = window != nil ? window : [[UIApplication sharedApplication] keyWindow];
+    window = window != nil ? window : [[[UIApplication sharedApplication] windows] firstObject];
+    
+    return [window xdc_printViewDesc:0 perfix:@"" showAllView:showAllView];
+    //return [self gx_printCurrentShowViewControllers:window showAllView:showAllView];
+}
+@end
+
+function gx_printViewControllerList(window) {
+    return [UIViewController gx_printViewControllerList:window];
+}
+
+function gx_printCurrentShowViewControllers(window, showAllView) {
+    return [UIViewController gx_printCurrentShowViewControllers:window showAllView:showAllView];
 }
 
 //
