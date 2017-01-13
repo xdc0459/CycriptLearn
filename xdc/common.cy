@@ -137,7 +137,7 @@ function gx_printAllSubClassFromClass2(superClass) {
     var str = [NSMutableString stringWithFormat:@"%*s%@", depth*4, "", [self xdc_viewControllerDesc_internal:perfix]];
     if ([[self childViewControllers] count] > 0) {
         if ([self isKindOfClass:[UITabBarController class]]) {
-            [str appendFormat:@", selIndex=%tu, childs:", [(UITabBarController *)self selectedIndex]];
+            [str appendFormat:@", selIndex=%tu, childs:", [self selectedIndex]];
         } else {
             [str appendFormat:@", childs:"];
         }
@@ -167,13 +167,13 @@ function gx_printAllSubClassFromClass2(superClass) {
     var str = [NSMutableString string];
     var nextRes = [self nextResponder]; // UIViewController.view's nextResponder is the UIViewController
     if ([nextRes isKindOfClass:[UIViewController class]] && [nextRes view] == self) {
-        [str appendFormat:@"+ %*s%@ -- %@\n", depth*gx_spaceNumPerDepth, "", [nextRes xdc_viewControllerDesc_internal:nil], [self xdc_viewDesc_internal:perfix]];
+        [str appendFormat:@"%*s+ %@ -- %@\n", depth*gx_spaceNumPerDepth, "", [nextRes xdc_viewControllerDesc_internal:nil], [self xdc_viewDesc_internal:perfix]];
     } else if (showAllView) {
         [str appendFormat:@"%*s%@\n", depth*gx_spaceNumPerDepth, "", [self xdc_viewDesc_internal:perfix]];
     }
     
     var subViews = [self subviews];
-    for (int i = 0; i < [subViews count]; ++i)
+    for (var i = 0; i < [subViews count]; ++i)
     {
         var subView = subViews[i];
         var string = [subView xdc_printViewDesc:(depth+1) perfix:nil showAllView:showAllView];
@@ -203,10 +203,13 @@ function gx_printAllSubClassFromClass2(superClass) {
 @end
 
 function gx_printViewControllerList(window) {
+    window = (window != undefined) ? window : nil;
     return [UIViewController gx_printViewControllerList:window];
 }
 
 function gx_printCurrentShowViewControllers(window, showAllView) {
+    window = (window != undefined) ? window : nil;
+    showAllView = (showAllView != undefined) ? showAllView : NO;
     return [UIViewController gx_printCurrentShowViewControllers:window showAllView:showAllView];
 }
 
