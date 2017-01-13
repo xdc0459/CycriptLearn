@@ -18,6 +18,13 @@ function is64Bit(){
 
 var gx_spaceNumPerDepth = 4;
 
+function gx_getSuitableWindow(window) {
+    window = window != nil ? window : [[[UIApplication sharedApplication] delegate] window];
+    window = window != nil ? window : [[UIApplication sharedApplication] keyWindow];
+    window = window != nil ? window : [[[UIApplication sharedApplication] windows] firstObject];
+    return window;
+}
+
 function gx_printMethods(classObj, fileName, showLog) {
     var string = [new NSMutableString init];
     var count = new new Type("I");
@@ -33,9 +40,7 @@ function gx_printMethods(classObj, fileName, showLog) {
 }
 
 function gx_printView(window, fileName, showLog) {
-    window = window != nil ? window : [[[UIApplication sharedApplication] delegate] window];
-    window = window != nil ? window : [[UIApplication sharedApplication] keyWindow];
-    window = window != nil ? window : [[[UIApplication sharedApplication] windows] firstObject];
+    window = gx_getSuitableWindow(window);
     var recursivStr = window.recursiveDescription();
     if (recursivStr && [recursivStr length] > 0 && fileName != nil && [fileName length] > 0) {
         var path = [[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"] stringByAppendingPathComponent:fileName];
@@ -120,35 +125,6 @@ function gx_printAllSubClassFromClass2(superClass) {
     free(pclasses);
     return string;
 }
-NSString * gx_printAllSubClassFromClass(Class superClass)
-{
-    int numClasses = objc_getClassList(NULL, 0);
-    Class * pclasses = (Class *)malloc(sizeof(Class) * numClasses);
-    if (pclasses == NULL) return nil;
-    numClasses = objc_getClassList(pclasses, numClasses);
-    
-    NSMutableString * string = [NSMutableString new];
-    for (int i = 0; i < numClasses; i++) {
-        Class class = pclasses[i];
-        if (class != NULL) {
-            if (superClass != NULL) {
-                //if ([class isSubclassOfClass:superClass])
-                Class sClass = class;
-                while (sClass != NULL && sClass != [NSObject class]) {
-                    if (sClass == superClass) {
-                        [string appendFormat:@"%@,", NSStringFromClass(class)];
-                        break;
-                    }
-                    sClass = class_getSuperclass(sClass);
-                }
-            } else {
-                [string appendFormat:@"%@,", NSStringFromClass(class)];
-            }
-        }
-    }
-    free(pclasses);
-    return string;
-}
 */
 
 @implementation UIViewController (ChildShowDesc)
@@ -189,7 +165,7 @@ NSString * gx_printAllSubClassFromClass(Class superClass)
 - (NSMutableString *)xdc_printViewDesc:(int)depth perfix:(NSString *)perfix showAllView:(BOOL)showAllView {
     //var self = this;
     var str = [NSMutableString string];
-    var nextRes = [self nextResponder];
+    var nextRes = [self nextResponder]; // UIViewController.view's nextResponder is the UIViewController
     if ([nextRes isKindOfClass:[UIViewController class]] && [nextRes view] == self) {
         [str appendFormat:@"+ %*s%@ -- %@\n", depth*gx_spaceNumPerDepth, "", [nextRes xdc_viewControllerDesc_internal:nil], [self xdc_viewDesc_internal:perfix]];
     } else if (showAllView) {
@@ -212,18 +188,14 @@ NSString * gx_printAllSubClassFromClass(Class superClass)
 @implementation UIViewController (ChildShow)
 + (NSMutableString *)gx_printViewControllerList:(UIWindow *)window
 {
-    window = window != nil ? window : [[[UIApplication sharedApplication] delegate] window];
-    window = window != nil ? window : [[UIApplication sharedApplication] keyWindow];
-    window = window != nil ? window : [[[UIApplication sharedApplication] windows] firstObject];
+    window = gx_getSuitableWindow(window);
     
     var controller = [window rootViewController];
     return [controller xdc_printViewControllerDesc:0 perfix:@"+"];
 }
 + (NSMutableString *)gx_printCurrentShowViewControllers:(UIWindow *)window showAllView:(BOOL)showAllView
 {
-    window = window != nil ? window : [[[UIApplication sharedApplication] delegate] window];
-    window = window != nil ? window : [[UIApplication sharedApplication] keyWindow];
-    window = window != nil ? window : [[[UIApplication sharedApplication] windows] firstObject];
+    window = gx_getSuitableWindow(window);
     
     return [window xdc_printViewDesc:0 perfix:@"" showAllView:showAllView];
     //return [self gx_printCurrentShowViewControllers:window showAllView:showAllView];
