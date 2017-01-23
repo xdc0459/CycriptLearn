@@ -44,14 +44,14 @@ function gx_printView(window, fileName, showLog) {
     var recursivStr = window.recursiveDescription();
     if (recursivStr && [recursivStr length] > 0 && fileName != nil && [fileName length] > 0) {
         var path = [[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"] stringByAppendingPathComponent:fileName];
-	// NSUTF8StringEncoding = 4
+        // NSUTF8StringEncoding = 4
         if ([recursivStr writeToFile:path atomically:YES encoding:4 error:nil]){
-	    if (!showLog) {
+            if (!showLog) {
                 recursivStr = [new NSString initWithFormat:@"had write to file : %@", path, nil];
-	    }
-	} else {
+            }
+        } else {
             
-	}
+        }
     }
     return recursivStr.toString();
 }
@@ -133,6 +133,7 @@ function gx_printAllSubClassFromClass2(superClass) {
     return [NSString stringWithFormat:@"%@[#%p %@]", (perfix ? perfix : @""), self, NSStringFromClass([self class])];
 }
 - (NSMutableString *)xdc_printViewControllerDesc:(int)depth perfix:(NSString *)perfix {
+    // [[UIApp.delegate.window rootViewController] _printHierarchy]
     //var self = this;
     var str = [NSMutableString stringWithFormat:@"%*s%@", depth*4, "", [self xdc_viewControllerDesc_internal:perfix]];
     if ([[self childViewControllers] count] > 0) {

@@ -9,14 +9,15 @@
 // cycript -p Sight
 
 var gx_cycript_code_dir = "/usr/lib/cycript0.9/com/xdc/";
+
 // include other .cy files
 function gx_include(name) {
-  var fn = gx_cycript_code_dir + name;
+    var fn = gx_cycript_code_dir + name;
 
-  var t = [new NSTask init]; [t setLaunchPath:@"/usr/bin/cycript"]; [t setArguments:["-c", fn]];
-  var p = [NSPipe pipe]; [t setStandardOutput:p]; [t launch]; [t waitUntilExit]; 
-  var s = [new NSString initWithData:[[p fileHandleForReading] readDataToEndOfFile] encoding:4];
-  return this.eval(s.toString());
+    var t = [new NSTask init]; [t setLaunchPath:@"/usr/bin/cycript"]; [t setArguments:["-c", fn]];
+    var p = [NSPipe pipe]; [t setStandardOutput:p]; [t launch]; [t waitUntilExit]; 
+    var s = [new NSString initWithData:[[p fileHandleForReading] readDataToEndOfFile] encoding:4];
+    return this.eval(s.toString());
 }
 
 //@import ./HookShader.cy;
